@@ -35,11 +35,10 @@ export async function POST(
     );
   }
 
-  const round = await db
+  const [round] = await db
     .select()
     .from(rounds)
-    .where(eq(rounds.id, roundId))
-    .get();
+    .where(eq(rounds.id, roundId));
 
   if (!round || round.status === "completed") {
     return NextResponse.json(
@@ -48,11 +47,10 @@ export async function POST(
     );
   }
 
-  const match = await db
+  const [match] = await db
     .select()
     .from(matches)
-    .where(eq(matches.roundId, roundId))
-    .get();
+    .where(eq(matches.roundId, roundId));
 
   if (!match) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
@@ -73,11 +71,10 @@ export async function POST(
   const team2PlayerIds = [match.team2Player1Id, match.team2Player2Id];
 
   for (const playerId of team1PlayerIds) {
-    const player = await db
+    const [player] = await db
       .select()
       .from(tournamentPlayers)
-      .where(eq(tournamentPlayers.id, playerId))
-      .get();
+      .where(eq(tournamentPlayers.id, playerId));
     if (!player) continue;
 
     await db
@@ -96,11 +93,10 @@ export async function POST(
   }
 
   for (const playerId of team2PlayerIds) {
-    const player = await db
+    const [player] = await db
       .select()
       .from(tournamentPlayers)
-      .where(eq(tournamentPlayers.id, playerId))
-      .get();
+      .where(eq(tournamentPlayers.id, playerId));
     if (!player) continue;
 
     await db
@@ -126,11 +122,10 @@ async function updateGlobalStats(
   points: number,
   won: boolean
 ) {
-  const stats = await db
+  const [stats] = await db
     .select()
     .from(playerStats)
-    .where(eq(playerStats.userId, userId))
-    .get();
+    .where(eq(playerStats.userId, userId));
 
   if (!stats) {
     await db.insert(playerStats).values({

@@ -17,11 +17,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       authorize: async (credentials) => {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await db
+        const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.email, credentials.email as string))
-          .get();
+          .where(eq(users.email, credentials.email as string));
 
         if (!user) return null;
 

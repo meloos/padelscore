@@ -27,10 +27,10 @@ export async function PATCH(
     );
   }
 
-  const round = await db.select().from(rounds).where(eq(rounds.id, roundId)).get();
+  const [round] = await db.select().from(rounds).where(eq(rounds.id, roundId));
   if (!round) return NextResponse.json({ error: "Round not found" }, { status: 404 });
 
-  const match = await db.select().from(matches).where(eq(matches.roundId, roundId)).get();
+  const [match] = await db.select().from(matches).where(eq(matches.roundId, roundId));
   if (!match) return NextResponse.json({ error: "Match not found" }, { status: 404 });
 
   const wasCompleted = match.status === "completed";
@@ -55,7 +55,7 @@ export async function PATCH(
     const team2Ids = [match.team2Player1Id, match.team2Player2Id];
 
     for (const pid of team1Ids) {
-      const p = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid)).get();
+      const [p] = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid));
       if (!p) continue;
       await db.update(tournamentPlayers).set({
         totalPoints: p.totalPoints - oldT1 + team1Score,
@@ -64,7 +64,7 @@ export async function PATCH(
       }).where(eq(tournamentPlayers.id, pid));
 
       if (p.userId) {
-        const s = await db.select().from(playerStats).where(eq(playerStats.userId, p.userId)).get();
+        const [s] = await db.select().from(playerStats).where(eq(playerStats.userId, p.userId));
         if (s) {
           await db.update(playerStats).set({
             totalPoints: s.totalPoints - oldT1 + team1Score,
@@ -77,7 +77,7 @@ export async function PATCH(
     }
 
     for (const pid of team2Ids) {
-      const p = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid)).get();
+      const [p] = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid));
       if (!p) continue;
       await db.update(tournamentPlayers).set({
         totalPoints: p.totalPoints - oldT2 + team2Score,
@@ -86,7 +86,7 @@ export async function PATCH(
       }).where(eq(tournamentPlayers.id, pid));
 
       if (p.userId) {
-        const s = await db.select().from(playerStats).where(eq(playerStats.userId, p.userId)).get();
+        const [s] = await db.select().from(playerStats).where(eq(playerStats.userId, p.userId));
         if (s) {
           await db.update(playerStats).set({
             totalPoints: s.totalPoints - oldT2 + team2Score,
@@ -103,7 +103,7 @@ export async function PATCH(
     const team2Ids = [match.team2Player1Id, match.team2Player2Id];
 
     for (const pid of team1Ids) {
-      const p = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid)).get();
+      const [p] = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid));
       if (!p) continue;
       await db.update(tournamentPlayers).set({
         totalPoints: p.totalPoints + team1Score,
@@ -114,7 +114,7 @@ export async function PATCH(
     }
 
     for (const pid of team2Ids) {
-      const p = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid)).get();
+      const [p] = await db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid));
       if (!p) continue;
       await db.update(tournamentPlayers).set({
         totalPoints: p.totalPoints + team2Score,

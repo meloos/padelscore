@@ -15,11 +15,10 @@ export async function GET(
 
   const { id } = await params;
 
-  const tournament = await db
+  const [tournament] = await db
     .select()
     .from(tournaments)
-    .where(eq(tournaments.id, id))
-    .get();
+    .where(eq(tournaments.id, id));
 
   if (!tournament) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -53,11 +52,10 @@ export async function GET(
 
   const allMatches = await Promise.all(
     roundList.map(async (round) => {
-      const m = await db
+      const [m] = await db
         .select()
         .from(matches)
-        .where(eq(matches.roundId, round.id))
-        .get();
+        .where(eq(matches.roundId, round.id));
       return { ...round, match: m };
     })
   );

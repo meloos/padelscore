@@ -16,11 +16,10 @@ export async function POST(
 
   const { id } = await params;
 
-  const tournament = await db
+  const [tournament] = await db
     .select()
     .from(tournaments)
-    .where(eq(tournaments.id, id))
-    .get();
+    .where(eq(tournaments.id, id));
 
   if (!tournament || tournament.status === "completed") {
     return NextResponse.json(
@@ -29,12 +28,11 @@ export async function POST(
     );
   }
 
-  const lastRound = await db
+  const [lastRound] = await db
     .select()
     .from(rounds)
     .where(eq(rounds.tournamentId, id))
-    .orderBy(desc(rounds.roundNumber))
-    .get();
+    .orderBy(desc(rounds.roundNumber));
 
   if (lastRound?.status === "active") {
     return NextResponse.json(

@@ -11,11 +11,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "All fields required" }, { status: 400 });
   }
 
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(users)
-    .where(eq(users.email, email))
-    .get();
+    .where(eq(users.email, email));
 
   if (existing) {
     return NextResponse.json(
