@@ -1,0 +1,22 @@
+services:
+  padelscore:
+    # Local build — comment out and use 'image:' below to pull from GHCR instead
+    build: .
+    # image: ghcr.io/meloos/padelscore:latest
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - padelscore-data:/app/data
+
+    environment:
+      # Generate with: openssl rand -base64 32
+      AUTH_SECRET: "change-me-before-production"
+      # First account registered with this email gets admin rights
+      ADMIN_EMAIL: "admin@example.com"
+
+    restart: unless-stopped
+
+volumes:
+  padelscore-data:

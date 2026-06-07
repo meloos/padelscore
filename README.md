@@ -128,18 +128,28 @@ export const db = drizzle(pool, { schema });
 
 ## Docker
 
-Build and run locally:
+A `docker-compose.yml` is included. By default it builds locally; swap the `build`/`image` lines to pull from GHCR instead.
+
+```bash
+# Build and run locally
+docker compose up --build
+
+# Pull from GHCR and run (edit docker-compose.yml to use 'image:' line)
+docker compose up
+```
+
+Set `AUTH_SECRET` and `ADMIN_EMAIL` in `docker-compose.yml` before starting. The SQLite database is stored in the `padelscore-data` named volume and migrations run automatically on every container start.
+
+### Manual docker run
 
 ```bash
 docker build -t padelscore .
 docker run -p 3000:3000 \
   -v padelscore-data:/app/data \
-  -e AUTH_SECRET=your-32-char-secret \
+  -e AUTH_SECRET=$(openssl rand -base64 32) \
   -e ADMIN_EMAIL=admin@example.com \
   padelscore
 ```
-
-The SQLite database is stored in the `/app/data` volume. DB migrations run automatically on every container start via Next.js instrumentation hook.
 
 ## GHCR / GitHub Actions CI-CD
 
@@ -151,14 +161,12 @@ No extra secrets needed — the workflow uses the built-in `GITHUB_TOKEN` with `
 
 The image is published at: `ghcr.io/meloos/padelscore`
 
-### Pulling and running the published image
-
 ```bash
+# Pull and run the published image
 docker pull ghcr.io/meloos/padelscore:latest
-
 docker run -p 3000:3000 \
   -v padelscore-data:/app/data \
-  -e AUTH_SECRET=your-32-char-secret \
+  -e AUTH_SECRET=$(openssl rand -base64 32) \
   -e ADMIN_EMAIL=admin@example.com \
   ghcr.io/meloos/padelscore:latest
 ```
@@ -228,8 +236,8 @@ src/
 │   │   └── migrate.ts       # Migration runner
 │   ├── auth.ts              # NextAuth configuration
 │   └── utils.ts             # cn(), generatePairings(), formatDate()
-├── auth.config.ts           # Edge-safe auth config (used by middleware)
-├── middleware.ts             # Route protection
+├── auth.config.ts           # Edge-safe auth config (used by proxy)
+├── proxy.ts                 # Route protection
 └── types/
     └── next-auth.d.ts       # NextAuth session type augmentation
 ```
