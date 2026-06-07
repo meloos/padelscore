@@ -91,14 +91,16 @@ Default: SQLite at `./local.db`.
 
 ### Switch to PostgreSQL
 
-1. Install the PostgreSQL driver:
+Five files need to change. Apply all of them, then regenerate migrations.
+
+**1. Install the PostgreSQL driver:**
 
 ```bash
 npm install pg
 npm install -D @types/pg
 ```
 
-2. Update `drizzle.config.ts`:
+**2. `drizzle.config.ts` — change dialect to postgresql:**
 
 ```ts
 import { defineConfig } from "drizzle-kit";
@@ -113,7 +115,7 @@ export default defineConfig({
 });
 ```
 
-3. Update `src/lib/db/index.ts`:
+**3. `src/lib/db/index.ts` — replace the SQLite connection:**
 
 ```ts
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -122,9 +124,67 @@ import * as schema from "./schema";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
+
+export { schema };
 ```
 
-4. Set `DATABASE_URL` to your PostgreSQL connection string and re-run migrations.
+**4. `src/instrumentation.ts` — use the postgres migrator:**
+
+```ts
+export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+    const { db } = await import("@/lib/db");
+    const path = await import("path");
+
+    await migrate(db, {
+      migrationsFolder: path.join(process.cwd(), "drizzle"),
+    });
+
+    console.log("[startup] Database migrations applied");
+  }
+}
+```
+
+**5. `next.config.ts` — swap the external package:**
+
+```ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+  serverExternalPackages: ["pg", "pg-native"],
+};
+
+export default nextConfig;
+```
+
+**6. Regenerate migrations for PostgreSQL:**
+
+```bash
+DATABASE_URL=postgresql://user:password@host:5432/dbname npm run db:generate
+```
+
+> The existing SQLite migration files in `drizzle/` are incompatible with PostgreSQL.
+> Delete them and regenerate: `rm -rf drizzle/ && npm run db:generate`
+
+**`DATABASE_URL` format:**
+
+```
+postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME
+```
+
+Example: `postgresql://padel:secret@localhost:5432/padelscore`
+
+### Docker Compose with PostgreSQL
+
+A `docker-compose.postgres.yml` is provided for running the app with a managed PostgreSQL container:
+
+```bash
+docker compose -f docker-compose.postgres.yml up --build
+```
+
+Set `AUTH_SECRET`, `POSTGRES_PASSWORD`, and `ADMIN_EMAIL` in the file (or via environment) before starting. Migrations run automatically on container startup.
 
 ## Docker
 
