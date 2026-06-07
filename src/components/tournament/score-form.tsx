@@ -74,9 +74,9 @@ export function ScoreForm({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4 items-center">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center">
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
+          <Label className="text-xs text-muted-foreground truncate block">
             {team1.join(" & ")}
           </Label>
           <Input
@@ -96,7 +96,7 @@ export function ScoreForm({
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground text-right block">
+          <Label className="text-xs text-muted-foreground text-right truncate block">
             {team2.join(" & ")}
           </Label>
           <Input

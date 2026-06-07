@@ -22,18 +22,18 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-24 text-center">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-24 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-8">
           <Zap className="w-3 h-3" />
           Mexicano Format Support
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 max-w-3xl">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-6 max-w-3xl">
           Your padel tournament,{" "}
           <span className="gradient-text">perfectly scored</span>
         </h1>
 
-        <p className="text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed">
+        <p className="text-base sm:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed">
           Create, run, and track Mexicano padel tournaments with automatic
           random pair generation, live leaderboards, and player statistics.
         </p>

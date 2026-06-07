@@ -64,40 +64,49 @@ export function AdminScoreEdit({
   }
 
   return (
-    <div className="flex items-center gap-2 mt-1 flex-wrap">
-      <span className="text-xs text-muted-foreground shrink-0">{team1Names.join(" & ")}</span>
-      <Input
-        type="number"
-        min={0}
-        max={21}
-        value={s1}
-        onChange={(e) => {
-          setS1(e.target.value);
-          const n = parseInt(e.target.value);
-          if (!isNaN(n) && n >= 0 && n <= 21) setS2(String(21 - n));
-        }}
-        className="w-16 h-7 text-center text-sm"
-      />
-      <span className="text-muted-foreground">–</span>
-      <Input
-        type="number"
-        min={0}
-        max={21}
-        value={s2}
-        onChange={(e) => {
-          setS2(e.target.value);
-          const n = parseInt(e.target.value);
-          if (!isNaN(n) && n >= 0 && n <= 21) setS1(String(21 - n));
-        }}
-        className="w-16 h-7 text-center text-sm"
-      />
-      <span className="text-xs text-muted-foreground shrink-0">{team2Names.join(" & ")}</span>
-      <Button size="icon" className="h-7 w-7" onClick={save} disabled={!valid || saving}>
-        <Check className="w-3 h-3" />
-      </Button>
-      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setOpen(false)}>
-        <X className="w-3 h-3" />
-      </Button>
+    <div className="mt-1 space-y-2">
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-end">
+        <div className="space-y-1">
+          <span className="text-xs text-muted-foreground truncate block">{team1Names.join(" & ")}</span>
+          <Input
+            type="number"
+            min={0}
+            max={21}
+            value={s1}
+            onChange={(e) => {
+              setS1(e.target.value);
+              const n = parseInt(e.target.value);
+              if (!isNaN(n) && n >= 0 && n <= 21) setS2(String(21 - n));
+            }}
+            className="h-7 text-center text-sm"
+          />
+        </div>
+        <span className="text-muted-foreground pb-1">–</span>
+        <div className="space-y-1">
+          <span className="text-xs text-muted-foreground truncate block text-right">{team2Names.join(" & ")}</span>
+          <Input
+            type="number"
+            min={0}
+            max={21}
+            value={s2}
+            onChange={(e) => {
+              setS2(e.target.value);
+              const n = parseInt(e.target.value);
+              if (!isNaN(n) && n >= 0 && n <= 21) setS1(String(21 - n));
+            }}
+            className="h-7 text-center text-sm"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" className="flex-1 h-7 text-xs" onClick={save} disabled={!valid || saving}>
+          <Check className="w-3 h-3" />
+          Save
+        </Button>
+        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setOpen(false)}>
+          <X className="w-3 h-3" />
+        </Button>
+      </div>
     </div>
   );
 }

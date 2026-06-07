@@ -116,7 +116,8 @@ export default function AdminUsersPage() {
                     className="gap-1.5 text-xs"
                   >
                     <Shield className="w-3.5 h-3.5" />
-                    {u.isAdmin ? "Revoke admin" : "Make admin"}
+                    <span className="hidden sm:inline">{u.isAdmin ? "Revoke admin" : "Make admin"}</span>
+                    <span className="sm:hidden">{u.isAdmin ? "Revoke" : "Admin"}</span>
                   </Button>
                   <Button
                     variant="ghost"

@@ -158,13 +158,13 @@ export default function NewTournamentPage() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     placeholder={`Player ${i + 1} name`}
                     {...register(`players.${i}.displayName`)}
                   />
                   <select
-                    className="flex h-10 rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[140px]"
+                    className="flex h-10 rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-auto sm:min-w-[140px]"
                     onChange={(e) => {
                       const user = registeredUsers.find((u) => u.id === e.target.value);
                       linkUser(i, user ?? null);

@@ -17,8 +17,8 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen">
       <header className="glass border-b border-border sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
-          <div className="flex items-center gap-2 text-primary font-bold">
+        <div className="max-w-6xl mx-auto px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <div className="flex items-center gap-2 text-primary font-bold shrink-0">
             <ShieldCheck className="w-5 h-5" />
             Admin
           </div>
@@ -30,16 +30,17 @@ export default async function AdminLayout({
               <Link
                 key={href}
                 href={href}
+                title={label}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
               >
                 <Icon className="w-4 h-4" />
-                {label}
+                <span className="hidden sm:inline">{label}</span>
               </Link>
             ))}
           </nav>
           <Link
             href="/dashboard"
-            className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
           >
             ← Back to app
           </Link>

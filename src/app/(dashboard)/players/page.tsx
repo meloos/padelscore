@@ -86,16 +86,16 @@ export default function PlayersPage() {
                   <p className="text-xs text-muted-foreground truncate">{player.email}</p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-right shrink-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-right">
                   <div>
-                    <p className="text-xs text-muted-foreground">Points</p>
-                    <p className="font-black text-xl text-primary">
+                    <p className="text-xs text-muted-foreground">Pts</p>
+                    <p className="font-black text-base sm:text-xl text-primary">
                       {player.totalPoints ?? 0}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">W/L</p>
-                    <p className="font-mono font-bold">
+                    <p className="font-mono font-bold text-sm sm:text-base">
                       {player.totalWins ?? 0}/{player.totalLosses ?? 0}
                     </p>
                   </div>
