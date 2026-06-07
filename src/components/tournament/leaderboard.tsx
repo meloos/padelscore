@@ -68,7 +68,7 @@ export function Leaderboard({ players, completed = false }: LeaderboardProps) {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div className="text-right hidden sm:block">
+            <div className="text-right">
               <p className="text-xs text-muted-foreground">W / L</p>
               <p className="font-mono text-sm font-semibold">
                 {player.wins} / {player.losses}
