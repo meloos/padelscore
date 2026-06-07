@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tournaments, tournamentPlayers, users, rounds, matches } from "@/lib/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, or, inArray } from "drizzle-orm";
 import { generatePairings } from "@/lib/utils";
 
 export async function GET() {
@@ -11,10 +11,20 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const participatingIds = db
+    .select({ id: tournamentPlayers.tournamentId })
+    .from(tournamentPlayers)
+    .where(eq(tournamentPlayers.userId, session.user.id));
+
   const rows = await db
     .select()
     .from(tournaments)
-    .where(eq(tournaments.createdBy, session.user.id))
+    .where(
+      or(
+        eq(tournaments.createdBy, session.user.id),
+        inArray(tournaments.id, participatingIds)
+      )
+    )
     .orderBy(desc(tournaments.createdAt));
 
   return NextResponse.json(rows);
