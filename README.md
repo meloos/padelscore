@@ -12,20 +12,20 @@ Mexicano padel tournament tracker with live leaderboards, random pair generation
 - **Final standings** — 1st–4th place with winner announcement
 - **Global stats** — registered players accumulate cross-tournament totals
 - **Authentication** — email/password registration and login
-- **SQLite by default** — drop-in PostgreSQL support via Drizzle ORM
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 |
 | Database ORM | Drizzle ORM |
-| Database | SQLite (better-sqlite3) |
+| Database | PostgreSQL (pg) |
 | Auth | NextAuth.js v5 (JWT) |
 | Forms | React Hook Form + Zod |
 | UI | Custom components on Radix UI primitives |
+| Tests | Vitest (integration tests against real PostgreSQL) |
 
 ## Getting started
 
@@ -35,30 +35,39 @@ Mexicano padel tournament tracker with live leaderboards, random pair generation
 npm install
 ```
 
-### 2. Configure environment
-
-Copy `.env.local` and set your secret:
+### 2. Start a local PostgreSQL instance
 
 ```bash
-cp .env.local .env.local
+# With Docker (quickest):
+docker run -d \
+  --name padelscore-db \
+  -e POSTGRES_DB=padelscore \
+  -e POSTGRES_USER=padel \
+  -e POSTGRES_PASSWORD=password \
+  -p 5432:5432 \
+  postgres:16-alpine
 ```
 
+### 3. Configure environment
+
+Edit `.env.local`:
+
 ```env
-DATABASE_URL=./local.db
+DATABASE_URL=postgresql://padel:password@localhost:5432/padelscore
 AUTH_SECRET=your-32-char-secret-here
 NEXTAUTH_URL=http://localhost:3000
+ADMIN_EMAIL=admin@example.com
 ```
 
 Generate a strong secret: `openssl rand -base64 32`
 
-### 3. Generate and run migrations
+### 4. Run migrations
 
 ```bash
-npm run db:generate   # generates SQL migration files
-npm run db:migrate    # applies migrations to local.db
+npm run db:migrate
 ```
 
-### 4. Start dev server
+### 5. Start dev server
 
 ```bash
 npm run dev
@@ -85,127 +94,37 @@ Open [http://localhost:3000](http://localhost:3000).
 - Ranking: most points first, with wins as tiebreaker
 - Random pairing rotates through the 3 possible 2v2 combinations
 
-## Database
+## Tests
 
-Default: SQLite at `./local.db`.
-
-### Switch to PostgreSQL
-
-Five files need to change. Apply all of them, then regenerate migrations.
-
-**1. Install the PostgreSQL driver:**
+Tests run against a real PostgreSQL database (no mocks). The test suite includes unit tests for utility functions and integration tests for the database layer.
 
 ```bash
-npm install pg
-npm install -D @types/pg
+# Requires DATABASE_URL pointing at a test database
+DATABASE_URL=postgresql://padel:password@localhost:5432/padelscore_test npm test
 ```
 
-**2. `drizzle.config.ts` — change dialect to postgresql:**
-
-```ts
-import { defineConfig } from "drizzle-kit";
-
-export default defineConfig({
-  schema: "./src/lib/db/schema.ts",
-  out: "./drizzle",
-  dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.DATABASE_URL!,
-  },
-});
-```
-
-**3. `src/lib/db/index.ts` — replace the SQLite connection:**
-
-```ts
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import * as schema from "./schema";
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
-
-export { schema };
-```
-
-**4. `src/instrumentation.ts` — use the postgres migrator:**
-
-```ts
-export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { migrate } = await import("drizzle-orm/node-postgres/migrator");
-    const { db } = await import("@/lib/db");
-    const path = await import("path");
-
-    await migrate(db, {
-      migrationsFolder: path.join(process.cwd(), "drizzle"),
-    });
-
-    console.log("[startup] Database migrations applied");
-  }
-}
-```
-
-**5. `next.config.ts` — swap the external package:**
-
-```ts
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  output: "standalone",
-  serverExternalPackages: ["pg", "pg-native"],
-};
-
-export default nextConfig;
-```
-
-**6. Regenerate migrations for PostgreSQL:**
-
-```bash
-DATABASE_URL=postgresql://user:password@host:5432/dbname npm run db:generate
-```
-
-> The existing SQLite migration files in `drizzle/` are incompatible with PostgreSQL.
-> Delete them and regenerate: `rm -rf drizzle/ && npm run db:generate`
-
-**`DATABASE_URL` format:**
-
-```
-postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME
-```
-
-Example: `postgresql://padel:secret@localhost:5432/padelscore`
-
-### Docker Compose with PostgreSQL
-
-A `docker-compose.postgres.yml` is provided for running the app with a managed PostgreSQL container:
-
-```bash
-docker compose -f docker-compose.postgres.yml up --build
-```
-
-Set `AUTH_SECRET`, `POSTGRES_PASSWORD`, and `ADMIN_EMAIL` in the file (or via environment) before starting. Migrations run automatically on container startup.
+In CI, GitHub Actions spins up a `postgres:16-alpine` service container automatically.
 
 ## Docker
 
-A `docker-compose.yml` is included. By default it builds locally; swap the `build`/`image` lines to pull from GHCR instead.
+A `docker-compose.yml` is included. It starts PostgreSQL alongside the app. By default it builds locally; swap the `build`/`image` lines to pull from GHCR instead.
 
 ```bash
-# Build and run locally
+# Build and run locally (with postgres)
 docker compose up --build
 
 # Pull from GHCR and run (edit docker-compose.yml to use 'image:' line)
 docker compose up
 ```
 
-Set `AUTH_SECRET` and `ADMIN_EMAIL` in `docker-compose.yml` before starting. The SQLite database is stored in the `padelscore-data` named volume and migrations run automatically on every container start.
+Edit `docker-compose.yml` to set `POSTGRES_PASSWORD`, `AUTH_SECRET`, and `ADMIN_EMAIL` before starting. Migrations run automatically on every container start.
 
-### Manual docker run
+### Manual docker run (external postgres)
 
 ```bash
 docker build -t padelscore .
 docker run -p 3000:3000 \
-  -v padelscore-data:/app/data \
+  -e DATABASE_URL=postgresql://user:password@host:5432/padelscore \
   -e AUTH_SECRET=$(openssl rand -base64 32) \
   -e ADMIN_EMAIL=admin@example.com \
   padelscore
@@ -214,8 +133,9 @@ docker run -p 3000:3000 \
 ## GHCR / GitHub Actions CI-CD
 
 The workflow at `.github/workflows/docker-publish.yml`:
-- **PRs** to `main` — builds the image (no push) to catch errors early
-- **Push to `main`** — builds and pushes two tags to GHCR: `latest` and the commit SHA
+1. **Test** — spins up `postgres:16-alpine` and runs the full test suite
+2. **Build** — builds the Docker image (runs on both PRs and pushes; PRs skip the push)
+3. **Push** — on merge to `main`, pushes two tags to GHCR: `latest` and the commit SHA
 
 No extra secrets needed — the workflow uses the built-in `GITHUB_TOKEN` with `packages: write` permission.
 
@@ -225,7 +145,7 @@ The image is published at: `ghcr.io/meloos/padelscore`
 # Pull and run the published image
 docker pull ghcr.io/meloos/padelscore:latest
 docker run -p 3000:3000 \
-  -v padelscore-data:/app/data \
+  -e DATABASE_URL=postgresql://user:password@host:5432/padelscore \
   -e AUTH_SECRET=$(openssl rand -base64 32) \
   -e ADMIN_EMAIL=admin@example.com \
   ghcr.io/meloos/padelscore:latest
@@ -260,6 +180,8 @@ The admin panel is at `/admin` and is only visible in the navbar for admin users
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
+| `npm test` | Run test suite (requires `DATABASE_URL`) |
+| `npm run test:watch` | Run tests in watch mode |
 | `npm run db:generate` | Generate Drizzle migration files |
 | `npm run db:migrate` | Apply migrations to database |
 | `npm run db:studio` | Open Drizzle Studio (visual DB browser) |
@@ -292,7 +214,7 @@ src/
 ├── lib/
 │   ├── db/
 │   │   ├── schema.ts        # Drizzle schema (users, tournaments, rounds…)
-│   │   ├── index.ts         # DB connection
+│   │   ├── index.ts         # DB connection (pg Pool)
 │   │   └── migrate.ts       # Migration runner
 │   ├── auth.ts              # NextAuth configuration
 │   └── utils.ts             # cn(), generatePairings(), formatDate()
@@ -300,4 +222,13 @@ src/
 ├── proxy.ts                 # Route protection
 └── types/
     └── next-auth.d.ts       # NextAuth session type augmentation
+tests/
+├── global-setup.ts          # Runs migrations once before all tests
+├── setup.ts                 # Truncates tables between tests
+├── helpers.ts               # Test data factories
+├── lib/
+│   └── utils.test.ts        # Unit tests for utility functions
+└── db/
+    ├── users.test.ts        # User and player_stats integration tests
+    └── tournaments.test.ts  # Tournament, round, match integration tests
 ```

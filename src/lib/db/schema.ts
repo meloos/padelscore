@@ -1,20 +1,17 @@
-import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
-  isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const tournaments = sqliteTable("tournaments", {
+export const tournaments = pgTable("tournaments", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -24,13 +21,11 @@ export const tournaments = sqliteTable("tournaments", {
     .notNull()
     .references(() => users.id),
   status: text("status").notNull().default("active"),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
-  completedAt: integer("completed_at", { mode: "timestamp" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
 });
 
-export const tournamentPlayers = sqliteTable("tournament_players", {
+export const tournamentPlayers = pgTable("tournament_players", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -45,7 +40,7 @@ export const tournamentPlayers = sqliteTable("tournament_players", {
   roundsPlayed: integer("rounds_played").notNull().default(0),
 });
 
-export const rounds = sqliteTable("rounds", {
+export const rounds = pgTable("rounds", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -54,13 +49,11 @@ export const rounds = sqliteTable("rounds", {
     .references(() => tournaments.id),
   roundNumber: integer("round_number").notNull(),
   status: text("status").notNull().default("active"),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
-  completedAt: integer("completed_at", { mode: "timestamp" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
 });
 
-export const matches = sqliteTable("matches", {
+export const matches = pgTable("matches", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -84,7 +77,7 @@ export const matches = sqliteTable("matches", {
   status: text("status").notNull().default("active"),
 });
 
-export const playerStats = sqliteTable("player_stats", {
+export const playerStats = pgTable("player_stats", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -97,9 +90,7 @@ export const playerStats = sqliteTable("player_stats", {
   totalLosses: integer("total_losses").notNull().default(0),
   tournamentsPlayed: integer("tournaments_played").notNull().default(0),
   tournamentsWon: integer("tournaments_won").notNull().default(0),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export type User = typeof users.$inferSelect;

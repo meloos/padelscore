@@ -1,14 +1,12 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { Pool } from "pg";
 import path from "path";
 
-const DATABASE_URL = process.env.DATABASE_URL ?? "./local.db";
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle(pool);
 
-const sqlite = new Database(DATABASE_URL);
-const db = drizzle(sqlite);
-
-migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+await migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
 
 console.log("Migration complete");
-sqlite.close();
+await pool.end();

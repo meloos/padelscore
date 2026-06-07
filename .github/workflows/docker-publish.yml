@@ -1,4 +1,4 @@
-name: Build & push to GHCR
+name: CI / Build & push to GHCR
 
 on:
   push:
@@ -10,9 +10,50 @@ env:
   IMAGE: ghcr.io/meloos/padelscore
 
 jobs:
+  # ── Run tests against a real PostgreSQL instance ────────────────────────────
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: padelscore_test
+          POSTGRES_USER: padel
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U padel -d padelscore_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://padel:testpassword@localhost:5432/padelscore_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  # ── Build Docker image (and push on main) ───────────────────────────────────
   build-and-push:
     name: Build Docker image
     runs-on: ubuntu-latest
+    needs: test
 
     permissions:
       contents: read

@@ -8,7 +8,6 @@ node_modules
 data/
 .env*
 .claude
-drizzle/meta
 README.md
 AGENTS.md
 CLAUDE.md
