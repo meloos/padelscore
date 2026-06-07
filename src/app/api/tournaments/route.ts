@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { tournaments, tournamentPlayers, users, rounds, matches } from "@/lib/db/schema";
+import { desc, eq } from "drizzle-orm";
+import { generatePairings } from "@/lib/utils";
+
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rows = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.createdBy, session.user.id))
+    .orderBy(desc(tournaments.createdAt));
+
+  return NextResponse.json(rows);
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { name, type, players } = await req.json();
+
+  if (!name || !players || players.length !== 4) {
+    return NextResponse.json(
+      { error: "Tournament needs exactly 4 players" },
+      { status: 400 }
+    );
+  }
+
+  const [tournament] = await db
+    .insert(tournaments)
+    .values({ name, type: type ?? "mexicano", createdBy: session.user.id })
+    .returning();
+
+  const insertedPlayers = await db
+    .insert(tournamentPlayers)
+    .values(
+      players.map((p: { displayName: string; userId?: string }) => ({
+        tournamentId: tournament.id,
+        userId: p.userId ?? null,
+        displayName: p.displayName,
+      }))
+    )
+    .returning();
+
+  const playerIds = insertedPlayers.map((p) => p.id);
+  const [team1, team2] = generatePairings(playerIds);
+
+  const [round] = await db
+    .insert(rounds)
+    .values({ tournamentId: tournament.id, roundNumber: 1 })
+    .returning();
+
+  await db.insert(matches).values({
+    roundId: round.id,
+    team1Player1Id: team1[0],
+    team1Player2Id: team1[1],
+    team2Player1Id: team2[0],
+    team2Player2Id: team2[1],
+  });
+
+  return NextResponse.json({ ...tournament, players: insertedPlayers, round });
+}

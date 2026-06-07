@@ -1,0 +1,309 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import {
+  Trophy,
+  Plus,
+  CheckCircle,
+  Flag,
+  ArrowLeft,
+  Swords,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Leaderboard } from "@/components/tournament/leaderboard";
+import { MatchCard } from "@/components/tournament/match-card";
+import { ScoreForm } from "@/components/tournament/score-form";
+import { AdminScoreEdit } from "@/components/tournament/admin-score-edit";
+import { toast } from "@/components/ui/use-toast";
+import Link from "next/link";
+
+interface TournamentPlayer {
+  id: string;
+  displayName: string;
+  totalPoints: number;
+  wins: number;
+  losses: number;
+  roundsPlayed: number;
+}
+
+interface MatchData {
+  id: string;
+  roundId: string;
+  team1Player1Id: string;
+  team1Player2Id: string;
+  team2Player1Id: string;
+  team2Player2Id: string;
+  team1Score: number | null;
+  team2Score: number | null;
+  status: string;
+}
+
+interface RoundData {
+  id: string;
+  roundNumber: number;
+  status: string;
+  match?: MatchData;
+}
+
+interface TournamentData {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  players: TournamentPlayer[];
+  rounds: RoundData[];
+}
+
+export default function TournamentPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isAdmin;
+  const [tournament, setTournament] = useState<TournamentData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/tournaments/${id}`);
+    if (!res.ok) {
+      router.push("/dashboard");
+      return;
+    }
+    setTournament(await res.json());
+    setLoading(false);
+  }, [id, router]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const playerMap = Object.fromEntries(
+    tournament?.players.map((p) => [p.id, p]) ?? []
+  );
+
+  const activeRound = tournament?.rounds.find((r) => r.status === "active");
+  const completedRounds = tournament?.rounds.filter(
+    (r) => r.status === "completed"
+  );
+
+  async function startNextRound() {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/tournaments/${id}/rounds`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error);
+      }
+      await load();
+      toast({ title: "Round started!", description: "New pairs have been drawn." });
+    } catch (e: unknown) {
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : "Failed",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function completeTournament() {
+    if (!confirm("End the tournament and show final standings?")) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/tournaments/${id}/complete`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error);
+      }
+      const data = await res.json();
+      await load();
+      toast({
+        title: "Tournament complete!",
+        description: `Winner: ${data.winner}`,
+      });
+    } catch (e: unknown) {
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : "Failed",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-muted-foreground">
+        Loading tournament…
+      </div>
+    );
+  }
+
+  if (!tournament) return null;
+
+  const isCompleted = tournament.status === "completed";
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-start gap-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/dashboard">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        </Button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-black truncate">{tournament.name}</h1>
+            <Badge variant={tournament.type === "mexicano" ? "default" : "secondary"}>
+              {tournament.type}
+            </Badge>
+            <Badge variant={isCompleted ? "success" : "accent"}>
+              {isCompleted ? "Completed" : "Active"}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground mt-1">
+            {tournament.rounds.length} round
+            {tournament.rounds.length !== 1 ? "s" : ""} played
+          </p>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-primary" />
+                {isCompleted ? "Final standings" : "Live standings"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Leaderboard players={tournament.players} completed={isCompleted} />
+            </CardContent>
+          </Card>
+
+          {!isCompleted && (
+            <div className="flex gap-3">
+              {!activeRound && (
+                <Button
+                  onClick={startNextRound}
+                  disabled={actionLoading}
+                  className="flex-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  Start round {(tournament.rounds.length ?? 0) + 1}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={completeTournament}
+                disabled={actionLoading || !!activeRound}
+                className="flex-1 border-destructive/50 text-destructive hover:bg-destructive/10"
+              >
+                <Flag className="w-4 h-4" />
+                End tournament
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          {activeRound?.match && (
+            <Card className="border-accent/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Swords className="w-5 h-5 text-accent" />
+                  Round {activeRound.roundNumber} — Enter score
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <MatchCard
+                  roundNumber={activeRound.roundNumber}
+                  team1={[
+                    playerMap[activeRound.match.team1Player1Id]?.displayName,
+                    playerMap[activeRound.match.team1Player2Id]?.displayName,
+                  ]}
+                  team2={[
+                    playerMap[activeRound.match.team2Player1Id]?.displayName,
+                    playerMap[activeRound.match.team2Player2Id]?.displayName,
+                  ]}
+                  team1Score={activeRound.match.team1Score}
+                  team2Score={activeRound.match.team2Score}
+                  status={activeRound.match.status}
+                />
+                <ScoreForm
+                  tournamentId={id}
+                  roundId={activeRound.id}
+                  team1={[
+                    playerMap[activeRound.match.team1Player1Id]?.displayName,
+                    playerMap[activeRound.match.team1Player2Id]?.displayName,
+                  ]}
+                  team2={[
+                    playerMap[activeRound.match.team2Player1Id]?.displayName,
+                    playerMap[activeRound.match.team2Player2Id]?.displayName,
+                  ]}
+                  onScoreSubmitted={load}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {completedRounds && completedRounds.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="font-bold text-lg">Completed rounds</h2>
+              {[...completedRounds].reverse().map((round) => {
+                if (!round.match) return null;
+                return (
+                  <div key={round.id}>
+                    <MatchCard
+                      roundNumber={round.roundNumber}
+                      team1={[
+                        playerMap[round.match.team1Player1Id]?.displayName,
+                        playerMap[round.match.team1Player2Id]?.displayName,
+                      ]}
+                      team2={[
+                        playerMap[round.match.team2Player1Id]?.displayName,
+                        playerMap[round.match.team2Player2Id]?.displayName,
+                      ]}
+                      team1Score={round.match.team1Score}
+                      team2Score={round.match.team2Score}
+                      status={round.status}
+                    />
+                    {isAdmin && round.match.team1Score !== null && (
+                      <div className="px-4 pb-2">
+                        <AdminScoreEdit
+                          roundId={round.id}
+                          currentTeam1Score={round.match.team1Score!}
+                          currentTeam2Score={round.match.team2Score!}
+                          team1Names={[
+                            playerMap[round.match.team1Player1Id]?.displayName,
+                            playerMap[round.match.team1Player2Id]?.displayName,
+                          ]}
+                          team2Names={[
+                            playerMap[round.match.team2Player1Id]?.displayName,
+                            playerMap[round.match.team2Player2Id]?.displayName,
+                          ]}
+                          onSaved={load}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

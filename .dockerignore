@@ -1,0 +1,14 @@
+.git
+.github
+.next
+node_modules
+*.db
+*.db-shm
+*.db-wal
+data/
+.env*
+.claude
+drizzle/meta
+README.md
+AGENTS.md
+CLAUDE.md
