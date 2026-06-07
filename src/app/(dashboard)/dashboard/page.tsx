@@ -14,8 +14,8 @@ interface Tournament {
   name: string;
   type: string;
   status: string;
-  createdAt: number;
-  completedAt?: number | null;
+  createdAt: string;
+  completedAt?: string | null;
 }
 
 export default function DashboardPage() {

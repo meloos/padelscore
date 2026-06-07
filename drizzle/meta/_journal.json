@@ -8,6 +8,13 @@
       "when": 1780842044543,
       "tag": "0000_ordinary_black_widow",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780866432476,
+      "tag": "0001_brief_banshee",
+      "breakpoints": true
     }
   ]
 }

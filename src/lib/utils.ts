@@ -14,9 +14,17 @@ export function generatePairings(playerIds: string[]): [string[], string[]] {
   return pairings[Math.floor(Math.random() * 3)];
 }
 
-export function formatDate(date: Date | number | null): string {
+export function formatDate(date: Date | number | string | null | undefined): string {
   if (!date) return "—";
-  const d = date instanceof Date ? date : new Date(date * 1000);
+  let d: Date;
+  if (date instanceof Date) {
+    d = date;
+  } else if (typeof date === "number") {
+    d = new Date(date * 1000);
+  } else {
+    d = new Date(date);
+  }
+  if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",

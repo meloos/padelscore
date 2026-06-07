@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  UserCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const baseNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tournaments/new", label: "New Tournament", icon: Trophy },
   { href: "/players", label: "Players", icon: Users },
+  { href: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 export function Navbar() {

@@ -15,7 +15,7 @@ interface AdminTournament {
   name: string;
   type: string;
   status: string;
-  createdAt: number;
+  createdAt: string;
   ownerName: string | null;
   ownerEmail: string | null;
 }
