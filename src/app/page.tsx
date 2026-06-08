@@ -83,7 +83,12 @@ export default function LandingPage() {
       </main>
 
       <footer className="text-center py-6 text-sm text-muted-foreground border-t border-border">
-        PadelScore · Mexicano tournament tracker
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <span>PadelScore · Mexicano tournament tracker</span>
+          <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+          <Link href="/data-deletion" className="hover:text-primary transition-colors">Data Deletion</Link>
+        </div>
       </footer>
     </div>
   );
