@@ -5,6 +5,7 @@ import { Trophy, Medal, BarChart3, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface Player {
   id: string;
@@ -15,6 +16,7 @@ interface Player {
   totalLosses: number;
   tournamentsPlayed: number;
   tournamentsWon: number;
+  eloRating: number | null;
 }
 
 const rankStyles = [
@@ -82,11 +84,19 @@ export default function PlayersPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-lg truncate">{player.name}</p>
+                  <Link href={`/players/${player.id}`} className="font-bold text-lg truncate hover:underline block">
+                    {player.name}
+                  </Link>
                   <p className="text-xs text-muted-foreground truncate">{player.email}</p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-right">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 text-right">
+                  <div>
+                    <p className="text-xs text-muted-foreground">ELO</p>
+                    <p className="font-black text-base sm:text-lg text-accent">
+                      {player.eloRating ?? 1000}
+                    </p>
+                  </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Pts</p>
                     <p className="font-black text-base sm:text-xl text-primary">

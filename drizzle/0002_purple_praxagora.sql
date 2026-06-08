@@ -1,0 +1,1 @@
+ALTER TABLE "player_stats" ADD COLUMN "elo_rating" integer DEFAULT 1000 NOT NULL;

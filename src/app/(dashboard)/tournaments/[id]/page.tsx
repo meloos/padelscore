@@ -10,6 +10,7 @@ import {
   Flag,
   ArrowLeft,
   Swords,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,11 +24,13 @@ import Link from "next/link";
 
 interface TournamentPlayer {
   id: string;
+  userId?: string | null;
   displayName: string;
   totalPoints: number;
   wins: number;
   losses: number;
   roundsPlayed: number;
+  eloRating?: number;
 }
 
 interface MatchData {
@@ -77,9 +80,24 @@ export default function TournamentPage() {
     setLoading(false);
   }, [id, router]);
 
+  // SSE for live leaderboard and round state updates
   useEffect(() => {
-    load();
-  }, [load]);
+    const es = new EventSource(`/api/tournaments/${id}/events`);
+
+    es.onmessage = (e) => {
+      const data = JSON.parse(e.data) as TournamentData;
+      setTournament(data);
+      setLoading(false);
+    };
+
+    es.onerror = () => {
+      es.close();
+      // Fall back to a one-time fetch if SSE fails
+      load();
+    };
+
+    return () => es.close();
+  }, [id, load]);
 
   const playerMap = Object.fromEntries(
     tournament?.players.map((p) => [p.id, p]) ?? []
@@ -171,10 +189,18 @@ export default function TournamentPage() {
               {isCompleted ? "Completed" : "Active"}
             </Badge>
           </div>
-          <p className="text-muted-foreground mt-1">
-            {tournament.rounds.length} round
-            {tournament.rounds.length !== 1 ? "s" : ""} played
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-muted-foreground">
+              {tournament.rounds.length} round
+              {tournament.rounds.length !== 1 ? "s" : ""} played
+            </p>
+            <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground hover:text-foreground">
+              <a href={`/api/tournaments/${id}/scorecard`} download>
+                <Download className="w-3.5 h-3.5" />
+                PDF scorecard
+              </a>
+            </Button>
+          </div>
         </div>
       </div>
 

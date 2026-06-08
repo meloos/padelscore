@@ -3,14 +3,17 @@
 import { Trophy, Medal, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface Player {
   id: string;
   displayName: string;
+  userId?: string | null;
   totalPoints: number;
   wins: number;
   losses: number;
   roundsPlayed: number;
+  eloRating?: number;
 }
 
 interface LeaderboardProps {
@@ -61,13 +64,28 @@ export function Leaderboard({ players, completed = false }: LeaderboardProps) {
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="font-semibold truncate">{player.displayName}</p>
+            {player.userId ? (
+              <Link href={`/players/${player.userId}`} className="font-semibold truncate hover:underline block">
+                {player.displayName}
+              </Link>
+            ) : (
+              <p className="font-semibold truncate">{player.displayName}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               {player.roundsPlayed} round{player.roundsPlayed !== 1 ? "s" : ""} played
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+            {player.eloRating !== undefined && (
+              <div className="text-right hidden sm:block">
+                <p className="text-xs text-muted-foreground">ELO</p>
+                <p className="font-mono text-sm font-semibold text-accent">
+                  {player.eloRating}
+                </p>
+              </div>
+            )}
+
             <div className="text-right">
               <p className="text-xs text-muted-foreground">W / L</p>
               <p className="font-mono text-sm font-semibold">

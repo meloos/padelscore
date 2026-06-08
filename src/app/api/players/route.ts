@@ -14,6 +14,7 @@ export async function GET() {
       totalLosses: playerStats.totalLosses,
       tournamentsPlayed: playerStats.tournamentsPlayed,
       tournamentsWon: playerStats.tournamentsWon,
+      eloRating: playerStats.eloRating,
     })
     .from(users)
     .leftJoin(playerStats, eq(playerStats.userId, users.id))

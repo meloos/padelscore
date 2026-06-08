@@ -15,6 +15,13 @@
       "when": 1780866432476,
       "tag": "0001_brief_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780915563161,
+      "tag": "0002_purple_praxagora",
+      "breakpoints": true
     }
   ]
 }

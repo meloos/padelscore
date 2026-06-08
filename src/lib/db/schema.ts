@@ -91,6 +91,7 @@ export const playerStats = pgTable("player_stats", {
   totalLosses: integer("total_losses").notNull().default(0),
   tournamentsPlayed: integer("tournaments_played").notNull().default(0),
   tournamentsWon: integer("tournaments_won").notNull().default(0),
+  eloRating: integer("elo_rating").notNull().default(1000),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 

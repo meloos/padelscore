@@ -1,8 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tournaments, tournamentPlayers, rounds, matches, playerStats } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
+import { renderToBuffer, Document } from "@react-pdf/renderer";
+import { createElement, ReactElement } from "react";
+import type { DocumentProps } from "@react-pdf/renderer";
+import { ScorecardDocument } from "@/components/pdf/scorecard-document";
 
 export async function GET(
   _req: NextRequest,
@@ -10,7 +14,7 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const { id } = await params;
@@ -21,13 +25,12 @@ export async function GET(
     .where(eq(tournaments.id, id));
 
   if (!tournament) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return new Response("Not found", { status: 404 });
   }
 
   const playersRaw = await db
     .select({
       id: tournamentPlayers.id,
-      tournamentId: tournamentPlayers.tournamentId,
       userId: tournamentPlayers.userId,
       displayName: tournamentPlayers.displayName,
       totalPoints: tournamentPlayers.totalPoints,
@@ -40,7 +43,7 @@ export async function GET(
     .leftJoin(playerStats, eq(playerStats.userId, tournamentPlayers.userId))
     .where(eq(tournamentPlayers.tournamentId, id));
 
-  const players = playersRaw.map((p) => ({ ...p, eloRating: p.eloRating ?? 1000 }));
+  const players = playersRaw.map((p) => ({ ...p, eloRating: p.eloRating ?? undefined }));
 
   const roundList = await db
     .select()
@@ -48,15 +51,25 @@ export async function GET(
     .where(eq(rounds.tournamentId, id))
     .orderBy(asc(rounds.roundNumber));
 
-  const allMatches = await Promise.all(
+  const roundsWithMatches = await Promise.all(
     roundList.map(async (round) => {
-      const [m] = await db
-        .select()
-        .from(matches)
-        .where(eq(matches.roundId, round.id));
+      const [m] = await db.select().from(matches).where(eq(matches.roundId, round.id));
       return { ...round, match: m };
     })
   );
 
-  return NextResponse.json({ ...tournament, players, rounds: allMatches });
+  const data = { ...tournament, players, rounds: roundsWithMatches };
+
+  const buffer = await renderToBuffer(
+    createElement(ScorecardDocument, { tournament: data }) as ReactElement<DocumentProps>
+  );
+
+  const safeName = tournament.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+
+  return new Response(new Uint8Array(buffer), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${safeName}_scorecard.pdf"`,
+    },
+  });
 }

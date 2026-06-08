@@ -9,6 +9,7 @@ import {
   users,
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { calculateTeamElo } from "@/lib/elo";
 
 export async function POST(
   req: NextRequest,
@@ -70,47 +71,59 @@ export async function POST(
   const team1PlayerIds = [match.team1Player1Id, match.team1Player2Id];
   const team2PlayerIds = [match.team2Player1Id, match.team2Player2Id];
 
-  for (const playerId of team1PlayerIds) {
-    const [player] = await db
-      .select()
-      .from(tournamentPlayers)
-      .where(eq(tournamentPlayers.id, playerId));
+  // Fetch all four tournament players and their global stats for ELO calculation
+  const allIds = [...team1PlayerIds, ...team2PlayerIds];
+  const allPlayers = await Promise.all(
+    allIds.map((pid) =>
+      db.select().from(tournamentPlayers).where(eq(tournamentPlayers.id, pid)).then((r) => r[0])
+    )
+  );
+  const [tp1p1, tp1p2, tp2p1, tp2p2] = allPlayers;
+
+  const getElo = async (userId: string | null) => {
+    if (!userId) return 1000;
+    const [s] = await db.select({ eloRating: playerStats.eloRating }).from(playerStats).where(eq(playerStats.userId, userId));
+    return s?.eloRating ?? 1000;
+  };
+
+  const [elo1p1, elo1p2, elo2p1, elo2p2] = await Promise.all([
+    getElo(tp1p1?.userId ?? null),
+    getElo(tp1p2?.userId ?? null),
+    getElo(tp2p1?.userId ?? null),
+    getElo(tp2p2?.userId ?? null),
+  ]);
+
+  const newElos = calculateTeamElo(
+    [elo1p1, elo1p2],
+    [elo2p1, elo2p2],
+    team1Won
+  );
+
+  const eloByTpId: Record<string, number> = {
+    [match.team1Player1Id]: newElos.team1[0],
+    [match.team1Player2Id]: newElos.team1[1],
+    [match.team2Player1Id]: newElos.team2[0],
+    [match.team2Player2Id]: newElos.team2[1],
+  };
+
+  for (const player of allPlayers) {
     if (!player) continue;
+    const isTeam1 = team1PlayerIds.includes(player.id);
+    const playerScore = isTeam1 ? team1Score : team2Score;
+    const won = isTeam1 ? team1Won : !team1Won;
 
     await db
       .update(tournamentPlayers)
       .set({
-        totalPoints: player.totalPoints + team1Score,
-        wins: player.wins + (team1Won ? 1 : 0),
-        losses: player.losses + (team1Won ? 0 : 1),
+        totalPoints: player.totalPoints + playerScore,
+        wins: player.wins + (won ? 1 : 0),
+        losses: player.losses + (won ? 0 : 1),
         roundsPlayed: player.roundsPlayed + 1,
       })
-      .where(eq(tournamentPlayers.id, playerId));
+      .where(eq(tournamentPlayers.id, player.id));
 
     if (player.userId) {
-      await updateGlobalStats(player.userId, team1Score, team1Won);
-    }
-  }
-
-  for (const playerId of team2PlayerIds) {
-    const [player] = await db
-      .select()
-      .from(tournamentPlayers)
-      .where(eq(tournamentPlayers.id, playerId));
-    if (!player) continue;
-
-    await db
-      .update(tournamentPlayers)
-      .set({
-        totalPoints: player.totalPoints + team2Score,
-        wins: player.wins + (team1Won ? 0 : 1),
-        losses: player.losses + (team1Won ? 1 : 0),
-        roundsPlayed: player.roundsPlayed + 1,
-      })
-      .where(eq(tournamentPlayers.id, playerId));
-
-    if (player.userId) {
-      await updateGlobalStats(player.userId, team2Score, !team1Won);
+      await updateGlobalStats(player.userId, playerScore, won, eloByTpId[player.id]);
     }
   }
 
@@ -120,7 +133,8 @@ export async function POST(
 async function updateGlobalStats(
   userId: string,
   points: number,
-  won: boolean
+  won: boolean,
+  newElo: number
 ) {
   const [stats] = await db
     .select()
@@ -134,6 +148,7 @@ async function updateGlobalStats(
       totalWins: won ? 1 : 0,
       totalLosses: won ? 0 : 1,
       tournamentsPlayed: 0,
+      eloRating: newElo,
     });
   } else {
     await db
@@ -142,6 +157,7 @@ async function updateGlobalStats(
         totalPoints: stats.totalPoints + points,
         totalWins: stats.totalWins + (won ? 1 : 0),
         totalLosses: stats.totalLosses + (won ? 0 : 1),
+        eloRating: newElo,
         updatedAt: new Date(),
       })
       .where(eq(playerStats.userId, userId));
