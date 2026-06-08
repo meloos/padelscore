@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#0f1923"/>
+
+  <!-- Subtle court cross lines -->
+  <line x1="512" y1="120" x2="512" y2="904" stroke="#1e3a2f" stroke-width="1.5"/>
+  <line x1="120" y1="512" x2="904" y2="512" stroke="#1e3a2f" stroke-width="1.5"/>
+
+  <!-- Outer court rect faint -->
+  <rect x="120" y="120" width="784" height="784" rx="4" fill="none" stroke="#1e3a2f" stroke-width="1.2"/>
+
+  <!-- Hexagon mark -->
+  <polygon points="512,160 712,276 712,504 512,620 312,504 312,276" fill="#22c55e"/>
+
+  <!-- Padel racket silhouette (simple) inside hex — just a P for now -->
+  <text x="512" y="390" text-anchor="middle" dominant-baseline="central" font-family="Georgia, serif" font-size="296" font-weight="700" fill="#0f1923">P</text>
+
+  <!-- App name below -->
+  <text x="512" y="780" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="76" font-weight="700" fill="#f8fafc">PadelScore</text>
+  <text x="512" y="860" text-anchor="middle" font-family="-apple-system, 'Helvetica Neue', sans-serif" font-size="28" fill="#64748b" letter-spacing="4">PADEL</text>
+</svg>

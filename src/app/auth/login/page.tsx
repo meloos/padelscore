@@ -7,7 +7,8 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Trophy, LogIn, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import { LogIn, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,9 +55,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-              <Trophy className="w-5 h-5 text-primary" />
-            </div>
+            <Image src="/images/icon.png" alt="PadelScore" width={40} height={40} className="rounded-xl" />
             <span className="font-bold text-xl gradient-text">PadelScore</span>
           </Link>
           <h1 className="text-3xl font-black">Welcome back</h1>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -37,9 +38,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 glass border-b border-border">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
-            <Trophy className="w-4 h-4 text-primary" />
-          </div>
+          <Image src="/images/icon.png" alt="PadelScore" width={32} height={32} className="rounded-lg" />
           <span className="font-bold text-lg gradient-text">PadelScore</span>
         </Link>
 

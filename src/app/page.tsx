@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Trophy, Zap, Users, BarChart3, ArrowRight } from "lucide-react";
+import { Zap, Users, BarChart3, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
@@ -7,9 +8,7 @@ export default function LandingPage() {
     <div className="court-bg min-h-screen flex flex-col">
       <header className="max-w-6xl mx-auto w-full px-4 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
-            <Trophy className="w-4 h-4 text-primary" />
-          </div>
+          <Image src="/images/icon.png" alt="PadelScore" width={32} height={32} className="rounded-lg" />
           <span className="font-bold text-lg gradient-text">PadelScore</span>
         </div>
         <div className="flex gap-3">

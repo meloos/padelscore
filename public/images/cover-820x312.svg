@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 312" width="820" height="312">
+  <!-- Background -->
+  <rect width="820" height="312" fill="#0f1923"/>
+
+  <!-- Court lines -->
+  <g stroke="#1e3a2f" stroke-width="1.2" fill="none">
+    <rect x="30" y="30" width="760" height="252" rx="3"/>
+    <line x1="410" y1="30" x2="410" y2="282"/>
+    <line x1="30" y1="110" x2="790" y2="110"/>
+    <line x1="30" y1="202" x2="790" y2="202"/>
+    <line x1="30" y1="156" x2="790" y2="156" stroke="#2a5c40" stroke-width="2"/>
+  </g>
+
+  <!-- Left icon -->
+  <g transform="translate(60, 96)">
+    <polygon points="60,0 108,28 108,84 60,112 12,84 12,28" fill="#22c55e"/>
+    <text x="60" y="56" text-anchor="middle" dominant-baseline="central" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#0f1923">P</text>
+  </g>
+
+  <!-- Main text -->
+  <text x="210" y="148" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="#f8fafc" letter-spacing="-1">PadelScore</text>
+  <text x="213" y="184" font-family="-apple-system, 'Helvetica Neue', sans-serif" font-size="18" fill="#94a3b8" letter-spacing="4">PADEL TOURNAMENT TRACKER</text>
+
+  <!-- Accent line -->
+  <rect x="210" y="192" width="420" height="2" rx="1" fill="#22c55e" opacity="0.5"/>
+
+  <!-- Tagline -->
+  <text x="213" y="230" font-family="-apple-system, 'Helvetica Neue', sans-serif" font-size="15" fill="#64748b">Create · Pair · Score · Rank</text>
+</svg>
