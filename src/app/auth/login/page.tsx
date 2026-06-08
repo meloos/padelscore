@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Trophy, LogIn, Eye, EyeOff } from "lucide-react";
+import { FacebookIcon } from "@/components/ui/facebook-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,7 +65,24 @@ export default function LoginPage() {
         </div>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full gap-2"
+              onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
+            >
+              <FacebookIcon className="w-5 h-5" />
+              Continue with Facebook
+            </Button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground">or</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="email">Email</Label>

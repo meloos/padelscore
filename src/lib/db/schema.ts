@@ -1,4 +1,4 @@
-import { boolean, date, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, date, integer, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id")
@@ -6,7 +6,7 @@ export const users = pgTable("users", {
     .$defaultFn(() => crypto.randomUUID()),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
   isAdmin: boolean("is_admin").notNull().default(false),
   birthdate: date("birthdate"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -94,9 +94,23 @@ export const playerStats = pgTable("player_stats", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const accounts = pgTable("accounts", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
+}, (t) => ({
+  providerUq: unique("accounts_provider_account_uq").on(t.provider, t.providerAccountId),
+}));
+
 export type User = typeof users.$inferSelect;
 export type Tournament = typeof tournaments.$inferSelect;
 export type TournamentPlayer = typeof tournamentPlayers.$inferSelect;
 export type Round = typeof rounds.$inferSelect;
 export type Match = typeof matches.$inferSelect;
 export type PlayerStats = typeof playerStats.$inferSelect;
+export type Account = typeof accounts.$inferSelect;
