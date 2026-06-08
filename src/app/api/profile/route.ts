@@ -12,13 +12,12 @@ export async function GET() {
   }
 
   const [user] = await db
-    .select({ id: users.id, name: users.name, email: users.email, birthdate: users.birthdate, passwordHash: users.passwordHash })
+    .select({ id: users.id, name: users.name, email: users.email, birthdate: users.birthdate })
     .from(users)
     .where(eq(users.id, session.user.id));
 
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const { passwordHash, ...rest } = user;
-  return NextResponse.json({ ...rest, hasPassword: !!passwordHash });
+  return NextResponse.json(user);
 }
 
 export async function PATCH(req: NextRequest) {
@@ -39,21 +38,17 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (newPassword) {
+    if (!currentPassword) {
+      return NextResponse.json({ error: "Current password required" }, { status: 400 });
+    }
     if (newPassword.length < 8) {
       return NextResponse.json({ error: "New password must be at least 8 characters" }, { status: 400 });
     }
     const [user] = await db.select().from(users).where(eq(users.id, session.user.id));
-    if (user.passwordHash) {
-      // Existing password — require current password to change
-      if (!currentPassword) {
-        return NextResponse.json({ error: "Current password required" }, { status: 400 });
-      }
-      const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-      if (!valid) {
-        return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
-      }
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
     }
-    // FB-only users (no passwordHash) can set a password without providing a current one
     updates.passwordHash = await bcrypt.hash(newPassword, 12);
   }
 
