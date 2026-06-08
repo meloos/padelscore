@@ -19,6 +19,7 @@ import { Leaderboard } from "@/components/tournament/leaderboard";
 import { MatchCard } from "@/components/tournament/match-card";
 import { ScoreForm } from "@/components/tournament/score-form";
 import { AdminScoreEdit } from "@/components/tournament/admin-score-edit";
+import { AdminPlayerAssign } from "@/components/tournament/admin-player-assign";
 import { toast } from "@/components/ui/use-toast";
 import Link from "next/link";
 
@@ -217,6 +218,13 @@ export default function TournamentPage() {
               <Leaderboard players={tournament.players} completed={isCompleted} />
             </CardContent>
           </Card>
+
+          {isAdmin && (
+            <AdminPlayerAssign
+              players={tournament.players}
+              onSaved={load}
+            />
+          )}
 
           {!isCompleted && (
             <div className="flex gap-3">

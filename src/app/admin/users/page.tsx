@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { ShieldCheck, Shield, Trash2, User, Pencil, X, Save, RefreshCw } from "lucide-react";
+import { ShieldCheck, Shield, Trash2, User, Pencil, X, Save, RefreshCw, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,11 +31,22 @@ interface EditState {
   generatingPw: boolean;
 }
 
+interface CreateState {
+  open: boolean;
+  name: string;
+  email: string;
+  saving: boolean;
+  result: { name: string; email: string; tempPassword: string } | null;
+}
+
 export default function AdminUsersPage() {
   const { data: session } = useSession();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<EditState | null>(null);
+  const [create, setCreate] = useState<CreateState>({
+    open: false, name: "", email: "", saving: false, result: null,
+  });
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/users");
@@ -69,6 +80,24 @@ export default function AdminUsersPage() {
     } else {
       const d = await res.json();
       toast({ title: "Error", description: d.error, variant: "destructive" });
+    }
+  }
+
+  async function createPlayer() {
+    setCreate((s) => ({ ...s, saving: true, result: null }));
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: create.name, email: create.email }),
+    });
+    const d = await res.json();
+    if (res.ok) {
+      setCreate((s) => ({ ...s, saving: false, name: "", email: "", result: d }));
+      load();
+      toast({ title: "Player created" });
+    } else {
+      toast({ title: "Error", description: d.error, variant: "destructive" });
+      setCreate((s) => ({ ...s, saving: false }));
     }
   }
 
@@ -121,6 +150,67 @@ export default function AdminUsersPage() {
           {users.length} registered account{users.length !== 1 ? "s" : ""}
         </p>
       </div>
+
+      {/* Create player */}
+      <Card className="border-primary/20">
+        <CardContent className="py-4 px-5">
+          <button
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => setCreate((s) => ({ ...s, open: !s.open, result: null }))}
+          >
+            <UserPlus className="w-4 h-4 text-primary" />
+            <span className="font-semibold">Create new player</span>
+            {create.open
+              ? <ChevronUp className="w-4 h-4 ml-auto text-muted-foreground" />
+              : <ChevronDown className="w-4 h-4 ml-auto text-muted-foreground" />}
+          </button>
+
+          {create.open && (
+            <div className="mt-4 pt-4 border-t border-border space-y-4">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Name</Label>
+                  <Input
+                    placeholder="Jan Kowalski"
+                    value={create.name}
+                    onChange={(e) => setCreate((s) => ({ ...s, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="jan@example.com"
+                    value={create.email}
+                    onChange={(e) => setCreate((s) => ({ ...s, email: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={createPlayer}
+                disabled={create.saving || !create.name.trim() || !create.email.trim()}
+                className="gap-1.5"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                {create.saving ? "Creating…" : "Create player"}
+              </Button>
+
+              {create.result && (
+                <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-xs text-muted-foreground shrink-0">
+                    <span className="font-semibold text-foreground">{create.result.name}</span> created — temp password:
+                  </p>
+                  <code className="font-mono font-bold text-primary tracking-wider">
+                    {create.result.tempPassword}
+                  </code>
+                  <p className="text-xs text-muted-foreground ml-auto">Share once — won't be shown again</p>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {loading ? (
         <p className="text-muted-foreground py-12 text-center">Loading…</p>
