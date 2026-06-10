@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, generatePairings, getOrdinal } from "@/lib/utils";
+import { formatDate, generatePairings, generateMultiCourtPairings, getOrdinal } from "@/lib/utils";
 
 describe("generatePairings", () => {
   const ids = ["A", "B", "C", "D"];
@@ -31,6 +31,51 @@ describe("generatePairings", () => {
       );
       expect(match).toBe(true);
     }
+  });
+});
+
+describe("generateMultiCourtPairings", () => {
+  it("returns one court for 4 players with no sitting out", () => {
+    const ids = ["A", "B", "C", "D"];
+    const { courts, sittingOut } = generateMultiCourtPairings(ids);
+    expect(courts).toHaveLength(1);
+    expect(courts[0].team1).toHaveLength(2);
+    expect(courts[0].team2).toHaveLength(2);
+    expect(sittingOut).toHaveLength(0);
+    const all = [...courts[0].team1, ...courts[0].team2].sort();
+    expect(all).toEqual(["A", "B", "C", "D"]);
+  });
+
+  it("returns two courts for 8 players with no sitting out", () => {
+    const ids = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    const { courts, sittingOut } = generateMultiCourtPairings(ids);
+    expect(courts).toHaveLength(2);
+    expect(sittingOut).toHaveLength(0);
+    const all = [...courts[0].team1, ...courts[0].team2, ...courts[1].team1, ...courts[1].team2].sort();
+    expect(all).toEqual(ids.slice().sort());
+  });
+
+  it("sits out the correct number of players for 6-player tournament", () => {
+    const ids = ["A", "B", "C", "D", "E", "F"];
+    const { courts, sittingOut } = generateMultiCourtPairings(ids);
+    expect(courts).toHaveLength(1);
+    expect(sittingOut).toHaveLength(2);
+    const playing = [...courts[0].team1, ...courts[0].team2];
+    expect(new Set([...playing, ...sittingOut]).size).toBe(6);
+  });
+
+  it("fair waiting: guarantees last sitters play next round", () => {
+    const ids = ["A", "B", "C", "D", "E"];
+    // Run 50 times to confirm the last sitters always get included
+    for (let i = 0; i < 50; i++) {
+      const { courts } = generateMultiCourtPairings(ids, ["E"], true);
+      const playing = [...courts[0].team1, ...courts[0].team2];
+      expect(playing).toContain("E");
+    }
+  });
+
+  it("throws for fewer than 4 players", () => {
+    expect(() => generateMultiCourtPairings(["A", "B", "C"])).toThrow();
   });
 });
 

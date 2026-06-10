@@ -22,6 +22,7 @@ export const tournaments = pgTable("tournaments", {
     .notNull()
     .references(() => users.id),
   status: text("status").notNull().default("active"),
+  fairWaiting: boolean("fair_waiting").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),
 });

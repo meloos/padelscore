@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tournaments, tournamentPlayers, users, rounds, matches } from "@/lib/db/schema";
 import { desc, eq, or, inArray } from "drizzle-orm";
-import { generatePairings } from "@/lib/utils";
+import { generateMultiCourtPairings } from "@/lib/utils";
 
 export async function GET() {
   const session = await auth();
@@ -36,18 +36,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, type, players } = await req.json();
+  const { name, type, players, fairWaiting } = await req.json();
 
-  if (!name || !players || players.length !== 4) {
+  if (!name || !players || players.length < 4) {
     return NextResponse.json(
-      { error: "Tournament needs exactly 4 players" },
+      { error: "Tournament needs at least 4 players" },
       { status: 400 }
     );
   }
 
   const [tournament] = await db
     .insert(tournaments)
-    .values({ name, type: type ?? "mexicano", createdBy: session.user.id })
+    .values({
+      name,
+      type: type ?? "mexicano",
+      createdBy: session.user.id,
+      fairWaiting: fairWaiting === true,
+    })
     .returning();
 
   const insertedPlayers = await db
@@ -62,20 +67,22 @@ export async function POST(req: NextRequest) {
     .returning();
 
   const playerIds = insertedPlayers.map((p) => p.id);
-  const [team1, team2] = generatePairings(playerIds);
+  const { courts } = generateMultiCourtPairings(playerIds);
 
   const [round] = await db
     .insert(rounds)
     .values({ tournamentId: tournament.id, roundNumber: 1 })
     .returning();
 
-  await db.insert(matches).values({
-    roundId: round.id,
-    team1Player1Id: team1[0],
-    team1Player2Id: team1[1],
-    team2Player1Id: team2[0],
-    team2Player2Id: team2[1],
-  });
+  for (const court of courts) {
+    await db.insert(matches).values({
+      roundId: round.id,
+      team1Player1Id: court.team1[0],
+      team1Player2Id: court.team1[1],
+      team2Player1Id: court.team2[0],
+      team2Player2Id: court.team2[1],
+    });
+  }
 
   return NextResponse.json({ ...tournament, players: insertedPlayers, round });
 }

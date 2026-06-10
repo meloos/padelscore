@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/use-toast";
 
 interface AdminScoreEditProps {
   roundId: string;
+  matchId: string;
   currentTeam1Score: number;
   currentTeam2Score: number;
   team1Names: string[];
@@ -17,6 +18,7 @@ interface AdminScoreEditProps {
 
 export function AdminScoreEdit({
   roundId,
+  matchId,
   currentTeam1Score,
   currentTeam2Score,
   team1Names,
@@ -50,7 +52,7 @@ export function AdminScoreEdit({
     const res = await fetch(`/api/admin/rounds/${roundId}/score`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ team1Score: n1, team2Score: n2 }),
+      body: JSON.stringify({ team1Score: n1, team2Score: n2, matchId }),
     });
     setSaving(false);
     if (res.ok) {

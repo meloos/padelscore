@@ -8,6 +8,7 @@ interface MatchCardProps {
   team2Score?: number | null;
   status: string;
   roundNumber: number;
+  courtLabel?: string;
 }
 
 export function MatchCard({
@@ -17,6 +18,7 @@ export function MatchCard({
   team2Score,
   status,
   roundNumber,
+  courtLabel,
 }: MatchCardProps) {
   const completed = status === "completed";
   const team1Won = completed && team1Score! > team2Score!;
@@ -26,7 +28,7 @@ export function MatchCard({
     <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Round {roundNumber}
+          Round {roundNumber}{courtLabel && ` · ${courtLabel}`}
         </span>
         <span
           className={cn(

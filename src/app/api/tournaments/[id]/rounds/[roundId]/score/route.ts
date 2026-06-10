@@ -6,7 +6,6 @@ import {
   matches,
   tournamentPlayers,
   playerStats,
-  users,
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { calculateTeamElo } from "@/lib/elo";
@@ -21,7 +20,7 @@ export async function POST(
   }
 
   const { roundId } = await params;
-  const { team1Score, team2Score } = await req.json();
+  const { team1Score, team2Score, matchId } = await req.json();
 
   if (
     typeof team1Score !== "number" ||
@@ -36,42 +35,59 @@ export async function POST(
     );
   }
 
+  if (!matchId) {
+    return NextResponse.json({ error: "matchId is required" }, { status: 400 });
+  }
+
   const [round] = await db
     .select()
     .from(rounds)
     .where(eq(rounds.id, roundId));
 
-  if (!round || round.status === "completed") {
-    return NextResponse.json(
-      { error: "Round not found or already completed" },
-      { status: 400 }
-    );
+  if (!round) {
+    return NextResponse.json({ error: "Round not found" }, { status: 404 });
+  }
+  if (round.status === "completed") {
+    return NextResponse.json({ error: "Round already completed" }, { status: 400 });
   }
 
   const [match] = await db
     .select()
     .from(matches)
-    .where(eq(matches.roundId, roundId));
+    .where(and(eq(matches.id, matchId), eq(matches.roundId, roundId)));
 
   if (!match) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
+  }
+  if (match.status === "completed") {
+    return NextResponse.json({ error: "Match already scored" }, { status: 400 });
   }
 
   await db
     .update(matches)
     .set({ team1Score, team2Score, status: "completed" })
-    .where(eq(matches.id, match.id));
+    .where(eq(matches.id, matchId));
 
-  await db
-    .update(rounds)
-    .set({ status: "completed", completedAt: new Date() })
-    .where(eq(rounds.id, roundId));
+  // Complete the round only when all its matches are scored
+  const allRoundMatches = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.roundId, roundId));
+
+  const allDone = allRoundMatches.every(
+    (m) => m.id === matchId || m.status === "completed"
+  );
+  if (allDone) {
+    await db
+      .update(rounds)
+      .set({ status: "completed", completedAt: new Date() })
+      .where(eq(rounds.id, roundId));
+  }
 
   const team1Won = team1Score > team2Score;
   const team1PlayerIds = [match.team1Player1Id, match.team1Player2Id];
   const team2PlayerIds = [match.team2Player1Id, match.team2Player2Id];
 
-  // Fetch all four tournament players and their global stats for ELO calculation
   const allIds = [...team1PlayerIds, ...team2PlayerIds];
   const allPlayers = await Promise.all(
     allIds.map((pid) =>

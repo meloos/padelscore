@@ -50,7 +50,7 @@ interface RoundData {
   id: string;
   roundNumber: number;
   status: string;
-  match?: MatchData;
+  matches?: MatchData[];
 }
 
 interface TournamentData {
@@ -58,6 +58,7 @@ interface TournamentData {
   name: string;
   type: string;
   status: string;
+  fairWaiting: boolean;
   players: TournamentPlayer[];
   rounds: RoundData[];
 }
@@ -93,7 +94,6 @@ export default function TournamentPage() {
 
     es.onerror = () => {
       es.close();
-      // Fall back to a one-time fetch if SSE fails
       load();
     };
 
@@ -171,6 +171,7 @@ export default function TournamentPage() {
   if (!tournament) return null;
 
   const isCompleted = tournament.status === "completed";
+  const multiCourt = (activeRound?.matches?.length ?? 0) > 1;
 
   return (
     <div className="space-y-8">
@@ -194,6 +195,7 @@ export default function TournamentPage() {
             <p className="text-muted-foreground text-sm">
               {tournament.rounds.length} round
               {tournament.rounds.length !== 1 ? "s" : ""} played
+              {tournament.players.length > 4 && ` · ${tournament.players.length} players`}
             </p>
             <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2">
               <a href={`/api/tournaments/${id}/scorecard`} download>
@@ -252,85 +254,101 @@ export default function TournamentPage() {
         </div>
 
         <div className="space-y-6">
-          {activeRound?.match && (
-            <Card className="border-accent/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Swords className="w-5 h-5 text-accent" />
-                  Round {activeRound.roundNumber} — Enter score
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <MatchCard
-                  roundNumber={activeRound.roundNumber}
-                  team1={[
-                    playerMap[activeRound.match.team1Player1Id]?.displayName,
-                    playerMap[activeRound.match.team1Player2Id]?.displayName,
-                  ]}
-                  team2={[
-                    playerMap[activeRound.match.team2Player1Id]?.displayName,
-                    playerMap[activeRound.match.team2Player2Id]?.displayName,
-                  ]}
-                  team1Score={activeRound.match.team1Score}
-                  team2Score={activeRound.match.team2Score}
-                  status={activeRound.match.status}
-                />
-                <ScoreForm
-                  tournamentId={id}
-                  roundId={activeRound.id}
-                  team1={[
-                    playerMap[activeRound.match.team1Player1Id]?.displayName,
-                    playerMap[activeRound.match.team1Player2Id]?.displayName,
-                  ]}
-                  team2={[
-                    playerMap[activeRound.match.team2Player1Id]?.displayName,
-                    playerMap[activeRound.match.team2Player2Id]?.displayName,
-                  ]}
-                  onScoreSubmitted={load}
-                />
-              </CardContent>
-            </Card>
+          {/* Active round — one card per court */}
+          {activeRound?.matches && activeRound.matches.length > 0 && (
+            activeRound.matches.map((match, courtIdx) => (
+              <Card key={match.id} className="border-accent/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Swords className="w-5 h-5 text-accent" />
+                    Round {activeRound.roundNumber}
+                    {multiCourt && ` — Court ${courtIdx + 1}`}
+                    {match.status !== "completed" && " — Enter score"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <MatchCard
+                    roundNumber={activeRound.roundNumber}
+                    team1={[
+                      playerMap[match.team1Player1Id]?.displayName,
+                      playerMap[match.team1Player2Id]?.displayName,
+                    ]}
+                    team2={[
+                      playerMap[match.team2Player1Id]?.displayName,
+                      playerMap[match.team2Player2Id]?.displayName,
+                    ]}
+                    team1Score={match.team1Score}
+                    team2Score={match.team2Score}
+                    status={match.status}
+                  />
+                  {match.status !== "completed" && (
+                    <ScoreForm
+                      tournamentId={id}
+                      roundId={activeRound.id}
+                      matchId={match.id}
+                      team1={[
+                        playerMap[match.team1Player1Id]?.displayName,
+                        playerMap[match.team1Player2Id]?.displayName,
+                      ]}
+                      team2={[
+                        playerMap[match.team2Player1Id]?.displayName,
+                        playerMap[match.team2Player2Id]?.displayName,
+                      ]}
+                      onScoreSubmitted={load}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            ))
           )}
 
+          {/* Completed rounds */}
           {completedRounds && completedRounds.length > 0 && (
             <div className="space-y-3">
               <h2 className="font-bold text-lg">Completed rounds</h2>
               {[...completedRounds].reverse().map((round) => {
-                if (!round.match) return null;
+                const roundMatches = round.matches ?? [];
+                const multiCourtRound = roundMatches.length > 1;
                 return (
-                  <div key={round.id}>
-                    <MatchCard
-                      roundNumber={round.roundNumber}
-                      team1={[
-                        playerMap[round.match.team1Player1Id]?.displayName,
-                        playerMap[round.match.team1Player2Id]?.displayName,
-                      ]}
-                      team2={[
-                        playerMap[round.match.team2Player1Id]?.displayName,
-                        playerMap[round.match.team2Player2Id]?.displayName,
-                      ]}
-                      team1Score={round.match.team1Score}
-                      team2Score={round.match.team2Score}
-                      status={round.status}
-                    />
-                    {isAdmin && round.match.team1Score !== null && (
-                      <div className="px-4 pb-2">
-                        <AdminScoreEdit
-                          roundId={round.id}
-                          currentTeam1Score={round.match.team1Score!}
-                          currentTeam2Score={round.match.team2Score!}
-                          team1Names={[
-                            playerMap[round.match.team1Player1Id]?.displayName,
-                            playerMap[round.match.team1Player2Id]?.displayName,
+                  <div key={round.id} className="space-y-2">
+                    {roundMatches.map((match, courtIdx) => (
+                      <div key={match.id}>
+                        <MatchCard
+                          roundNumber={round.roundNumber}
+                          courtLabel={multiCourtRound ? `Court ${courtIdx + 1}` : undefined}
+                          team1={[
+                            playerMap[match.team1Player1Id]?.displayName,
+                            playerMap[match.team1Player2Id]?.displayName,
                           ]}
-                          team2Names={[
-                            playerMap[round.match.team2Player1Id]?.displayName,
-                            playerMap[round.match.team2Player2Id]?.displayName,
+                          team2={[
+                            playerMap[match.team2Player1Id]?.displayName,
+                            playerMap[match.team2Player2Id]?.displayName,
                           ]}
-                          onSaved={load}
+                          team1Score={match.team1Score}
+                          team2Score={match.team2Score}
+                          status={round.status}
                         />
+                        {isAdmin && match.team1Score !== null && (
+                          <div className="px-4 pb-2">
+                            <AdminScoreEdit
+                              roundId={round.id}
+                              matchId={match.id}
+                              currentTeam1Score={match.team1Score!}
+                              currentTeam2Score={match.team2Score!}
+                              team1Names={[
+                                playerMap[match.team1Player1Id]?.displayName,
+                                playerMap[match.team1Player2Id]?.displayName,
+                              ]}
+                              team2Names={[
+                                playerMap[match.team2Player1Id]?.displayName,
+                                playerMap[match.team2Player2Id]?.displayName,
+                              ]}
+                              onSaved={load}
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
                 );
               })}

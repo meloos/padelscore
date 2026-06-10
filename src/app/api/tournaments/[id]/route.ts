@@ -50,11 +50,11 @@ export async function GET(
 
   const allMatches = await Promise.all(
     roundList.map(async (round) => {
-      const [m] = await db
+      const roundMatches = await db
         .select()
         .from(matches)
         .where(eq(matches.roundId, round.id));
-      return { ...round, match: m };
+      return { ...round, matches: roundMatches };
     })
   );
 

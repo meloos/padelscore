@@ -37,8 +37,8 @@ async function fetchTournamentSnapshot(id: string) {
 
   const roundsWithMatches = await Promise.all(
     roundList.map(async (round) => {
-      const [m] = await db.select().from(matches).where(eq(matches.roundId, round.id));
-      return { ...round, match: m };
+      const roundMatches = await db.select().from(matches).where(eq(matches.roundId, round.id));
+      return { ...round, matches: roundMatches };
     })
   );
 

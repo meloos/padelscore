@@ -1,0 +1,1 @@
+ALTER TABLE "tournaments" ADD COLUMN "fair_waiting" boolean DEFAULT false NOT NULL;

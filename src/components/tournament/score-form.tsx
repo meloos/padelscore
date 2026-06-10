@@ -10,6 +10,7 @@ import { CheckCircle } from "lucide-react";
 interface ScoreFormProps {
   tournamentId: string;
   roundId: string;
+  matchId: string;
   team1: string[];
   team2: string[];
   onScoreSubmitted: () => void;
@@ -18,6 +19,7 @@ interface ScoreFormProps {
 export function ScoreForm({
   tournamentId,
   roundId,
+  matchId,
   team1,
   team2,
   onScoreSubmitted,
@@ -52,7 +54,7 @@ export function ScoreForm({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ team1Score: s1, team2Score: s2 }),
+          body: JSON.stringify({ team1Score: s1, team2Score: s2, matchId }),
         }
       );
       if (!res.ok) {

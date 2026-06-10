@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Trophy, UserCheck, User, Shuffle } from "lucide-react";
+import { Plus, Trophy, UserCheck, Shuffle, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,15 @@ interface RegisteredUser {
 
 const schema = z.object({
   name: z.string().min(2, "Tournament name required"),
-  players: z.array(
-    z.object({
-      displayName: z.string().min(1, "Name required"),
-      userId: z.string().optional(),
-    })
-  ).length(4),
+  fairWaiting: z.boolean(),
+  players: z
+    .array(
+      z.object({
+        displayName: z.string().min(1, "Name required"),
+        userId: z.string().optional(),
+      })
+    )
+    .min(4, "Add at least 4 players"),
 });
 type Fields = z.infer<typeof schema>;
 
@@ -43,11 +46,13 @@ export default function NewTournamentPage() {
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<Fields>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
+      fairWaiting: false,
       players: [
         { displayName: "", userId: undefined },
         { displayName: "", userId: undefined },
@@ -57,7 +62,11 @@ export default function NewTournamentPage() {
     },
   });
 
+  const { fields, append, remove } = useFieldArray({ control, name: "players" });
   const players = watch("players");
+  const fairWaiting = watch("fairWaiting");
+  const numCourts = Math.floor(players.length / 4);
+  const numSitting = players.length % 4;
 
   function linkUser(index: number, user: RegisteredUser | null) {
     if (user) {
@@ -98,7 +107,7 @@ export default function NewTournamentPage() {
       <div>
         <h1 className="text-3xl font-black">New tournament</h1>
         <p className="text-muted-foreground mt-1">
-          Set up a Mexicano padel tournament for 4 players
+          Set up a Mexicano padel tournament
         </p>
       </div>
 
@@ -125,13 +134,41 @@ export default function NewTournamentPage() {
 
             <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
               <Shuffle className="w-4 h-4 text-primary shrink-0" />
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-primary">Mexicano format</p>
                 <p className="text-xs text-muted-foreground">
-                  Random pairs each round, score to 21
+                  Random pairs each round · {numCourts} court{numCourts !== 1 ? "s" : ""} · score to 21
+                  {numSitting > 0 && ` · ${numSitting} player${numSitting !== 1 ? "s" : ""} sit out each round`}
                 </p>
               </div>
             </div>
+
+            {numSitting > 0 && (
+              <button
+                type="button"
+                onClick={() => setValue("fairWaiting", !fairWaiting)}
+                className={`w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
+                  fairWaiting
+                    ? "bg-accent/10 border-accent/40"
+                    : "border-border hover:border-border/80"
+                }`}
+              >
+                <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                  fairWaiting ? "bg-accent border-accent" : "border-muted-foreground"
+                }`}>
+                  {fairWaiting && <div className="w-2 h-2 bg-white rounded-sm" />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-accent" />
+                    <p className="text-sm font-semibold">Fair waiting</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Players who sat out last round are guaranteed to play next round — no one waits more than once in a row
+                  </p>
+                </div>
+              </button>
+            )}
           </CardContent>
         </Card>
 
@@ -139,22 +176,33 @@ export default function NewTournamentPage() {
           <CardHeader>
             <CardTitle>Players</CardTitle>
             <CardDescription>
-              Add exactly 4 players. Link registered accounts for global stat tracking.
+              Add at least 4 players. Every 4 players fills another court simultaneously.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {players.map((player, i) => (
-              <div key={i} className="space-y-2">
+            {fields.map((field, i) => (
+              <div key={field.id} className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                     {i + 1}
                   </span>
                   <Label>Player {i + 1}</Label>
-                  {player.userId && (
+                  {players[i]?.userId && (
                     <Badge variant="success" className="ml-auto">
                       <UserCheck className="w-3 h-3 mr-1" />
                       Registered
                     </Badge>
+                  )}
+                  {i >= 4 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 ml-auto text-muted-foreground hover:text-destructive"
+                      onClick={() => remove(i)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   )}
                 </div>
 
@@ -169,7 +217,7 @@ export default function NewTournamentPage() {
                       const user = registeredUsers.find((u) => u.id === e.target.value);
                       linkUser(i, user ?? null);
                     }}
-                    value={player.userId ?? ""}
+                    value={players[i]?.userId ?? ""}
                   >
                     <option value="">Guest player</option>
                     {registeredUsers.map((u) => (
@@ -187,6 +235,21 @@ export default function NewTournamentPage() {
                 )}
               </div>
             ))}
+
+            {errors.players?.root && (
+              <p className="text-destructive text-xs">{errors.players.root.message}</p>
+            )}
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5 w-full"
+              onClick={() => append({ displayName: "", userId: undefined })}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add player
+            </Button>
           </CardContent>
         </Card>
 
