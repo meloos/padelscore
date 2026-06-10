@@ -78,7 +78,7 @@ export default function PlayersPage() {
                 i < 3 ? rankStyles[i] : "border-border"
               )}
             >
-              <CardContent className="py-4 px-5 flex items-center gap-5">
+              <CardContent className="py-3 px-3 sm:py-4 sm:px-5 flex items-center gap-3 sm:gap-5">
                 <div className="w-10 h-10 rounded-full border-2 border-muted flex items-center justify-center shrink-0 text-lg font-black">
                   {i < 3 ? rankIcons[i] : <span className="text-muted-foreground text-base">{i + 1}</span>}
                 </div>
@@ -90,7 +90,7 @@ export default function PlayersPage() {
                   <p className="text-xs text-muted-foreground truncate">{player.email}</p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 text-right">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-1 sm:gap-x-4 text-right shrink-0">
                   <div>
                     <p className="text-xs text-muted-foreground">ELO</p>
                     <p className="font-black text-base sm:text-lg text-accent">

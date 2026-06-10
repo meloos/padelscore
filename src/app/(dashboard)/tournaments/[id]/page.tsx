@@ -181,8 +181,8 @@ export default function TournamentPage() {
           </Link>
         </Button>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-black truncate">{tournament.name}</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-black">{tournament.name}</h1>
             <Badge variant={tournament.type === "mexicano" ? "default" : "secondary"}>
               {tournament.type}
             </Badge>
@@ -190,12 +190,12 @@ export default function TournamentPage() {
               {isCompleted ? "Completed" : "Active"}
             </Badge>
           </div>
-          <div className="flex items-center gap-4 mt-1">
-            <p className="text-muted-foreground">
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <p className="text-muted-foreground text-sm">
               {tournament.rounds.length} round
               {tournament.rounds.length !== 1 ? "s" : ""} played
             </p>
-            <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2">
               <a href={`/api/tournaments/${id}/scorecard`} download>
                 <Download className="w-3.5 h-3.5" />
                 PDF scorecard

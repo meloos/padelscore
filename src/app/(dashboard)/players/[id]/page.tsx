@@ -219,7 +219,7 @@ export default function PlayerDetailPage() {
                 <div
                   key={m.matchId}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border text-sm",
+                    "flex items-start gap-3 p-3 rounded-lg border text-sm",
                     m.won
                       ? "border-green-500/20 bg-green-500/5"
                       : "border-red-500/20 bg-red-500/5"

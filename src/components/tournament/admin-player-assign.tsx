@@ -98,7 +98,7 @@ export function AdminPlayerAssign({ players, onSaved }: Props) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 gap-1 text-xs"
+                className="h-9 px-3 gap-1 text-xs"
                 onClick={() => editing?.tpId === p.id ? setEditing(null) : startEdit(p)}
               >
                 {editing?.tpId === p.id ? <X className="w-3 h-3" /> : "Edit"}
@@ -132,7 +132,7 @@ export function AdminPlayerAssign({ players, onSaved }: Props) {
                 </div>
                 <Button
                   size="sm"
-                  className="gap-1.5 h-7 text-xs"
+                  className="gap-1.5 h-9 text-xs"
                   onClick={save}
                   disabled={editing.saving || !editing.displayName.trim()}
                 >

@@ -121,7 +121,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant={t.type === "mexicano" ? "default" : "secondary"}>
+                      <Badge variant={t.type === "mexicano" ? "default" : "secondary"} className="hidden sm:inline-flex">
                         {t.type}
                       </Badge>
                       <Badge variant={t.status === "active" ? "accent" : "success"}>

@@ -40,7 +40,7 @@ export function MatchCard({
         </span>
       </div>
 
-      <div className="p-4 grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+      <div className="p-3 sm:p-4 grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 items-center">
         <div
           className={cn(
             "text-center p-3 rounded-lg transition-all",
@@ -59,7 +59,7 @@ export function MatchCard({
             </p>
           ))}
           {completed && (
-            <p className="text-3xl font-black mt-2 text-primary">
+            <p className="text-2xl sm:text-3xl font-black mt-2 text-primary">
               {team1Score}
             </p>
           )}
@@ -90,7 +90,7 @@ export function MatchCard({
             </p>
           ))}
           {completed && (
-            <p className="text-3xl font-black mt-2 text-primary">
+            <p className="text-2xl sm:text-3xl font-black mt-2 text-primary">
               {team2Score}
             </p>
           )}

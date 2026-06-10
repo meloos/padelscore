@@ -103,10 +103,10 @@ export default function AdminTournamentsPage() {
                           if (e.key === "Escape") setEditing(null);
                         }}
                       />
-                      <Button size="icon" className="h-8 w-8" onClick={() => saveName(t.id, editing.name)}>
+                      <Button size="icon" className="h-9 w-9" onClick={() => saveName(t.id, editing.name)}>
                         <Check className="w-3 h-3" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(null)}>
+                      <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setEditing(null)}>
                         <X className="w-3 h-3" />
                       </Button>
                     </div>

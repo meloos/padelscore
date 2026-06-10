@@ -221,9 +221,9 @@ export default function AdminUsersPage() {
               key={u.id}
               className={u.isAdmin ? "border-primary/30 bg-primary/5" : "border-border"}
             >
-              <CardContent className="py-4 px-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <CardContent className="py-4 px-4 sm:px-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
                     {u.isAdmin
                       ? <ShieldCheck className="w-5 h-5 text-primary" />
                       : <User className="w-5 h-5 text-muted-foreground" />
@@ -231,7 +231,7 @@ export default function AdminUsersPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold truncate">{u.name}</p>
                       {u.isAdmin && <Badge variant="default">Admin</Badge>}
                       {u.id === session?.user?.id && (
@@ -239,6 +239,37 @@ export default function AdminUsersPage() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{u.email} · Joined {formatDate(u.createdAt)}</p>
+
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => edit?.userId === u.id ? setEdit(null) : startEdit(u)}
+                        title="Edit user"
+                      >
+                        {edit?.userId === u.id ? <X className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleAdmin(u.id, u.isAdmin)}
+                        disabled={u.id === session?.user?.id}
+                        className="gap-1.5 text-xs h-9"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        {u.isAdmin ? "Revoke admin" : "Make admin"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => deleteUser(u.id, u.name)}
+                        disabled={u.id === session?.user?.id}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="hidden sm:flex items-center gap-6 text-right shrink-0">
@@ -250,38 +281,6 @@ export default function AdminUsersPage() {
                       <p className="text-xs text-muted-foreground">Tourneys</p>
                       <p className="font-bold">{u.tournamentsPlayed ?? 0}</p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => edit?.userId === u.id ? setEdit(null) : startEdit(u)}
-                      title="Edit user"
-                    >
-                      {edit?.userId === u.id ? <X className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleAdmin(u.id, u.isAdmin)}
-                      disabled={u.id === session?.user?.id}
-                      className="gap-1.5 text-xs"
-                    >
-                      <Shield className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{u.isAdmin ? "Revoke admin" : "Make admin"}</span>
-                      <span className="sm:hidden">{u.isAdmin ? "Revoke" : "Admin"}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => deleteUser(u.id, u.name)}
-                      disabled={u.id === session?.user?.id}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
                   </div>
                 </div>
 
